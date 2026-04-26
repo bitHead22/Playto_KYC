@@ -85,6 +85,11 @@ export default function MerchantFlow() {
   };
 
   const submitKyc = async () => {
+    if (!files.aadhaar_file) {
+      alert('Aadhaar document is mandatory for KYC submission. Please upload it before submitting.');
+      return;
+    }
+
     setSubmittingKycLoading(true);
     const data = new FormData();
     Object.entries(formData).forEach(([key, value]) => data.append(key, value));
