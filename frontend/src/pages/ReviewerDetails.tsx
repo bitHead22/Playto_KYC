@@ -33,7 +33,14 @@ export default function ReviewerDetails() {
         status: action, 
         rejection_reason: rejectionReason 
       });
-      navigate('/reviewer');
+      
+      if (action === 'under_review') {
+        const res = await api.get(`/reviewer/queue/${id}/`);
+        setData(res.data);
+        setLoadingAction(null);
+      } else {
+        navigate('/reviewer');
+      }
     } catch (err) {
       console.error(err);
       alert('Failed to perform action');
@@ -81,7 +88,6 @@ export default function ReviewerDetails() {
           <div className="text-sm font-bold tracking-widest uppercase">PLAYTO PAY</div>
           <div className="flex items-center gap-3 text-white/70">
             <NotificationBell role="reviewer" />
-            <Settings className="w-4 h-4 cursor-pointer hover:text-white transition-colors" />
           </div>
         </header>
 

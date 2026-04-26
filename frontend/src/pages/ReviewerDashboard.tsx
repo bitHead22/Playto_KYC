@@ -89,7 +89,6 @@ export default function ReviewerDashboard() {
           <div className="text-sm font-bold tracking-widest uppercase">PLAYTO PAY</div>
           <div className="flex items-center gap-3 text-white/70">
             <NotificationBell role="reviewer" />
-            <Settings className="w-4 h-4 cursor-pointer hover:text-white transition-colors" />
           </div>
         </header>
 
