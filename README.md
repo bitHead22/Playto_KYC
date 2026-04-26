@@ -13,6 +13,11 @@ This repository contains the full-stack implementation of the Playto Pay KYC onb
 ## System Architecture
 ![Playto Pay Architecture](./architecture.png)
 
+> ⚠️ **IMPORTANT DEPLOYMENT NOTE FOR EVALUATORS** ⚠️
+> The backend for this application is deployed on **Render's Free Tier**. Because of this, the server goes to "sleep" after 15 minutes of inactivity. 
+> **When you first log in or register, the authentication request may take up to 45 seconds** while the Render container spins back up. Subsequent requests will be extremely fast. Please be patient on your first login!
+
+
 
 <details>
 <summary><b>Project Directory Structure</b></summary>
