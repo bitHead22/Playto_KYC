@@ -1,5 +1,10 @@
 # Playto Pay KYC Onboarding Pipeline
 
+### Test Credentials
+* **Merchant 1:** `merchant01@playtopay.com` / `password123` (Status: Draft)
+* **Merchant 2:** `merchat02@playtopay.com` / `password123` (Status: Under Review)
+* **Reviewer:** `reviewer1@playtopay.com` / `password123`
+
 This repository contains the full-stack implementation of the Playto Pay KYC onboarding pipeline, built with Django, React, and Supabase.
 
 ## Deliverables Checklist
@@ -84,11 +89,6 @@ docker exec -it playtokyc-backend-1 python manage.py migrate
 # Run the seed script
 docker exec -it playtokyc-backend-1 python manage.py seed_db
 ```
-
-**Seed Script Output:**
-- Reviewer: `reviewer1@playtopay.com` / `password123`
-- Merchant 1: `merchant_01@playtopay.com` / `password123` (Status: Draft)
-- Merchant 2: `merchant_02@playtopay.com` / `password123` (Status: Under Review)
 
 ### 4. Running Unit Tests
 To execute the test suite (which includes tests for the state machine and illegal transitions):
