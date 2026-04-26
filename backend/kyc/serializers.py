@@ -51,6 +51,15 @@ class KYCSubmissionSerializer(serializers.ModelSerializer, FileValidationMixin):
 
 
 class NotificationEventSerializer(serializers.ModelSerializer):
+    message = serializers.SerializerMethodField()
+    submission_id = serializers.SerializerMethodField()
+
     class Meta:
         model = NotificationEvent
-        fields = '__all__'
+        fields = ('id', 'event_type', 'timestamp', 'is_read', 'payload', 'message', 'submission_id')
+
+    def get_message(self, obj):
+        return obj.payload.get('message', obj.event_type.replace('_', ' ').title())
+
+    def get_submission_id(self, obj):
+        return obj.payload.get('submission_id')

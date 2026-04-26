@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Bell, Settings, FileText, Eye, ArrowLeft, Shield } from 'lucide-react';
+import { Settings, FileText, Eye, ArrowLeft, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import NotificationBell from '@/components/ui/NotificationBell';
 import api from '../api';
 
 export default function MerchantDetails() {
@@ -51,7 +52,7 @@ export default function MerchantDetails() {
       <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_100%)]"></div>
 
       {/* Header */}
-      <header className="h-16 border-b border-white/10 flex items-center justify-between px-8 bg-black relative z-10 shrink-0">
+      <header className="h-16 border-b border-white/10 flex items-center justify-between px-8 bg-black relative z-50 shrink-0">
         <div className="flex items-center gap-6">
           <button 
             onClick={() => navigate('/merchant')} 
@@ -63,7 +64,8 @@ export default function MerchantDetails() {
           <div className="w-px h-6 bg-white/10"></div>
           <div className="text-sm font-bold tracking-widest uppercase">PLAYTO PAY</div>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
+          <NotificationBell role="merchant" />
           <div className="flex items-center gap-2 text-[10px] font-bold text-white/50 tracking-wider hidden sm:flex">
             <Shield className="w-3.5 h-3.5 text-white/40" />
             SECURE COMPLIANCE PORTAL

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Check, Bell, Settings, Shield, ArrowLeft } from 'lucide-react';
+import { Check, Settings, Shield, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import NotificationBell from '@/components/ui/NotificationBell';
 import PersonalDetails from '@/components/kyc/PersonalDetails';
 import BusinessDetails from '@/components/kyc/BusinessDetails';
 import DocumentUploads from '@/components/kyc/DocumentUploads';
@@ -115,7 +116,7 @@ export default function MerchantFlow() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans">
       {/* Navbar */}
-      <nav className="h-16 border-b border-white/10 flex items-center justify-between px-8 bg-black">
+      <nav className="h-16 border-b border-white/10 flex items-center justify-between px-8 bg-black relative z-50 shrink-0">
         <div className="flex items-center gap-6">
           <button 
             onClick={() => navigate('/merchant')} 
@@ -127,8 +128,8 @@ export default function MerchantFlow() {
           <div className="w-px h-6 bg-white/10"></div>
           <div className="text-sm font-bold tracking-widest uppercase">PLAYTO PAY</div>
         </div>
-        <div className="flex items-center gap-4 text-white/70">
-          <Bell className="w-4 h-4 cursor-pointer hover:text-white transition-colors" />
+        <div className="flex items-center gap-3 text-white/70">
+          <NotificationBell role="merchant" />
           <Settings className="w-4 h-4 cursor-pointer hover:text-white transition-colors" />
           <button 
             onClick={() => {
@@ -136,7 +137,7 @@ export default function MerchantFlow() {
               localStorage.removeItem('refresh_token');
               window.location.href = '/login';
             }} 
-            className="text-xs font-bold tracking-wider uppercase ml-4 border border-white/20 px-3 py-1.5 hover:bg-white hover:text-black transition-colors"
+            className="text-xs font-bold tracking-wider uppercase ml-2 border border-white/20 px-3 py-1.5 hover:bg-white hover:text-black transition-colors text-white"
           >
             Logout
           </button>

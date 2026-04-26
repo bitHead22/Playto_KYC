@@ -6,6 +6,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import KYCSubmission, NotificationEvent
 from .serializers import KYCSubmissionSerializer, NotificationEventSerializer, UserSerializer
+from rest_framework.decorators import action
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
@@ -129,3 +130,43 @@ def get_me(request):
         "email": request.user.email,
         "role": request.user.role
     })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def list_notifications(request):
+    """Return notifications for the logged-in user, newest first."""
+    notifications = NotificationEvent.objects.filter(
+        recipient=request.user
+    ).order_by('-timestamp')[:50]
+    serializer = NotificationEventSerializer(notifications, many=True)
+    unread_count = NotificationEvent.objects.filter(
+        recipient=request.user, is_read=False
+    ).count()
+    return Response({
+        "unread_count": unread_count,
+        "results": serializer.data
+    })
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def mark_notification_read(request, pk):
+    """Mark a single notification as read."""
+    try:
+        notification = NotificationEvent.objects.get(pk=pk, recipient=request.user)
+    except NotificationEvent.DoesNotExist:
+        return Response({"error": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+    notification.is_read = True
+    notification.save(update_fields=['is_read'])
+    return Response({"success": True})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def mark_all_notifications_read(request):
+    """Mark all of the current user's notifications as read."""
+    NotificationEvent.objects.filter(
+        recipient=request.user, is_read=False
+    ).update(is_read=True)
+    return Response({"success": True})

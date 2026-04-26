@@ -89,27 +89,68 @@ class KYCSubmission(models.Model):
 
         self.save()
 
-        # Create notification event
+        # ---- Notification for the MERCHANT ----
+        merchant_message_map = {
+            'submitted': 'Your KYC application has been submitted successfully.',
+            'under_review': 'Your KYC application is now under review by our team.',
+            'approved': 'Congratulations! Your KYC application has been approved.',
+            'rejected': f'Your KYC application has been rejected. Reason: {reason or "No reason provided."}',
+            'more_info_requested': f'Additional information is required for your KYC application. Note: {reason or "Please check your submission."}',
+        }
         NotificationEvent.objects.create(
             merchant=self.merchant,
+            recipient=self.merchant,
+            submission=self,
             event_type=f'STATUS_CHANGED_TO_{target_state.upper()}',
             payload={
                 'old_status': old_status,
                 'new_status': target_state,
                 'reviewer_id': reviewer.id if reviewer else None,
-                'reason': reason
+                'reason': reason,
+                'message': merchant_message_map.get(target_state, f'Your application status changed to {target_state}.'),
+                'submission_id': self.id,
+                'business_name': self.business_name,
             }
         )
+
+        # ---- Notifications for ALL REVIEWERS ----
+        # Only notify reviewers on transitions they care about (new submission or re-submission)
+        reviewer_notify_states = ['submitted']
+        if target_state in reviewer_notify_states:
+            from django.contrib.auth import get_user_model
+            UserModel = get_user_model()
+            reviewers = UserModel.objects.filter(role='reviewer')
+            reviewer_message = f'New KYC application submitted by {self.merchant.username} ({self.business_name or "Unnamed"}).'
+            for rev_user in reviewers:
+                NotificationEvent.objects.create(
+                    merchant=self.merchant,
+                    recipient=rev_user,
+                    submission=self,
+                    event_type='NEW_SUBMISSION_FOR_REVIEW',
+                    payload={
+                        'message': reviewer_message,
+                        'submission_id': self.id,
+                        'business_name': self.business_name,
+                        'merchant_username': self.merchant.username,
+                    }
+                )
 
     def __str__(self):
         return f"KYC {self.id} - {self.merchant.username} ({self.status})"
 
 
 class NotificationEvent(models.Model):
+    # Who triggered / is associated with the KYC submission
     merchant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    # Who receives this notification (merchant or reviewer)
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_notifications', null=True, blank=True)
+    # The related KYC submission (optional but useful for linking)
+    submission = models.ForeignKey('KYCSubmission', on_delete=models.CASCADE, related_name='notification_events', null=True, blank=True)
     event_type = models.CharField(max_length=100)
     timestamp = models.DateTimeField(auto_now_add=True)
     payload = models.JSONField(default=dict)
+    is_read = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.event_type} for {self.merchant.username}"
+        recipient_name = self.recipient.username if self.recipient else self.merchant.username
+        return f"{self.event_type} -> {recipient_name}"
