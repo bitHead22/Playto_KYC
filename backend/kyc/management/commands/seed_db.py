@@ -25,4 +25,28 @@ class Command(BaseCommand):
             merchant_2.save()
             self.stdout.write(self.style.SUCCESS('Successfully created merchant_2'))
 
+        # Create Submissions
+        sub1, created1 = KYCSubmission.objects.get_or_create(
+            merchant=merchant_1,
+            defaults={
+                'business_name': 'Alpha Corp',
+                'status': 'draft'
+            }
+        )
+        if created1:
+            self.stdout.write(self.style.SUCCESS('Created draft submission for merchant_1'))
+
+        sub2, created2 = KYCSubmission.objects.get_or_create(
+            merchant=merchant_2,
+            defaults={
+                'business_name': 'Beta Tech',
+                'status': 'draft'
+            }
+        )
+        if created2:
+            # Transition to under_review to ensure timestamps and notifications are fired
+            sub2.transition_state('submitted')
+            sub2.transition_state('under_review')
+            self.stdout.write(self.style.SUCCESS('Created under_review submission for merchant_2'))
+
         self.stdout.write(self.style.SUCCESS('Database seeding complete.'))
