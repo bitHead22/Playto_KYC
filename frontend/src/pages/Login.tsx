@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Lock, Mail } from 'lucide-react';
+import { ArrowRight, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '../api';
@@ -9,11 +9,14 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     // For the sake of the test, we're passing email as username
     // as Django default auth uses username. If you updated Django to use email as username, this is correct.
@@ -33,6 +36,8 @@ export default function Login() {
       }
     } catch (err) {
       setError('Invalid credentials');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,22 +80,33 @@ export default function Login() {
                   <Lock className="h-4 w-4 text-white/30" />
                 </div>
                 <Input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 bg-black border-white/20 text-white placeholder:text-white/20 h-11 text-sm focus-visible:ring-1 focus-visible:ring-white/50"
+                  className="pl-10 pr-10 bg-black border-white/20 text-white placeholder:text-white/20 h-11 text-sm focus-visible:ring-1 focus-visible:ring-white/50"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-white/30 hover:text-white/70 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
             <Button
               type="submit"
-              className="w-full h-11 bg-white text-black hover:bg-white/90 font-semibold tracking-wide text-sm flex justify-center items-center gap-2 mt-4 rounded-none"
+              disabled={loading}
+              className="w-full h-11 bg-white text-black hover:bg-white/90 font-semibold tracking-wide text-sm flex justify-center items-center gap-2 mt-4 rounded-none disabled:opacity-60"
             >
-              SIGN IN
-              <ArrowRight className="h-4 w-4" />
+              {loading ? (
+                <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+              ) : (
+                <>SIGN IN <ArrowRight className="h-4 w-4" /></>
+              )}
             </Button>
           </form>
 

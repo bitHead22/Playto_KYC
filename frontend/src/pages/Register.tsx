@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Lock, Mail, User } from 'lucide-react';
+import { ArrowRight, Lock, Mail, User, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '../api';
@@ -12,6 +12,8 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -109,13 +111,20 @@ export default function Register() {
                   <Lock className="h-4 w-4 text-white/30" />
                 </div>
                 <Input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="Min. 8 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 bg-black border-white/20 text-white placeholder:text-white/20 h-11 text-sm focus-visible:ring-1 focus-visible:ring-white/50"
+                  className="pl-10 pr-10 bg-black border-white/20 text-white placeholder:text-white/20 h-11 text-sm focus-visible:ring-1 focus-visible:ring-white/50"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-white/30 hover:text-white/70 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
@@ -126,13 +135,20 @@ export default function Register() {
                   <Lock className="h-4 w-4 text-white/30" />
                 </div>
                 <Input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="Re-enter password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 bg-black border-white/20 text-white placeholder:text-white/20 h-11 text-sm focus-visible:ring-1 focus-visible:ring-white/50"
+                  className="pl-10 pr-10 bg-black border-white/20 text-white placeholder:text-white/20 h-11 text-sm focus-visible:ring-1 focus-visible:ring-white/50"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-white/30 hover:text-white/70 focus:outline-none"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
