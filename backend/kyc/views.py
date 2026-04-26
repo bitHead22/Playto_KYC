@@ -5,7 +5,16 @@ from django.db.models import Case, When, Value, BooleanField, Q, Count, Avg, F
 from django.utils import timezone
 from datetime import timedelta
 from .models import KYCSubmission, NotificationEvent
-from .serializers import KYCSubmissionSerializer, NotificationEventSerializer
+from .serializers import KYCSubmissionSerializer, NotificationEventSerializer, UserSerializer
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def register_user(request):
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'message': 'Account created successfully.'}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class IsMerchant(permissions.BasePermission):
     def has_permission(self, request, view):

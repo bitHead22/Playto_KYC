@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import MerchantKYCViewSet, ReviewerQueueViewSet, dashboard_metrics, get_me
+from .views import MerchantKYCViewSet, ReviewerQueueViewSet, dashboard_metrics, get_me, register_user
 
 router = DefaultRouter()
 router.register(r'merchant/submissions', MerchantKYCViewSet, basename='merchant-kyc')
@@ -10,4 +10,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('reviewer/metrics/', dashboard_metrics, name='dashboard-metrics'),
     path('auth/me/', get_me, name='get_me'),
+    path('auth/register/', register_user, name='register'),
 ]
