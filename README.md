@@ -87,8 +87,8 @@ docker exec -it playtokyc-backend-1 python manage.py seed_db
 
 **Seed Script Output:**
 - Reviewer: `reviewer1@playtopay.com` / `password123`
-- Merchant 1: `merchant_1@playtopay.com` / `password123` (Status: Draft)
-- Merchant 2: `merchant_2@playtopay.com` / `password123` (Status: Under Review)
+- Merchant 1: `merchant_01@playtopay.com` / `password123` (Status: Draft)
+- Merchant 2: `merchant_02@playtopay.com` / `password123` (Status: Under Review)
 
 ### 4. Running Unit Tests
 To execute the test suite (which includes tests for the state machine and illegal transitions):
