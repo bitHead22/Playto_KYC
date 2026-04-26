@@ -37,7 +37,6 @@ For this assessment, we utilized `URLField`s to store references to documents. T
 If we were building the direct ingestion API for these files, the validation layer would be aggressively expanded:
 1. **MIME-Type spoofing**: We would not rely on the file extension. We would use `python-magic` to read the file header bytes to ensure a `.pdf` is actually a PDF and not an executable.
 2. **Size constraints**: Hard limits (e.g., 5MB) enforced at the Nginx reverse proxy level, not just the Django application level, to prevent Denial of Service (DoS) via memory exhaustion.
-3. **Malware scanning**: Incoming files would be sent to a quarantined S3 bucket to be scanned via ClamAV or similar tools before being marked as "safe for reviewer download."
 
 ### 3. API Design
 The API was designed with strict domain segregation:

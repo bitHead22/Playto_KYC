@@ -12,7 +12,7 @@ This repository contains the full-stack implementation of the Playto Pay KYC onb
 
 ## System Architecture
 ![Playto Pay Architecture](./architecture.png)
-*(Make sure to save your downloaded eraser.io image as `architecture.png` in the root folder!)*
+
 
 <details>
 <summary><b>Project Directory Structure</b></summary>
@@ -81,9 +81,9 @@ docker exec -it playtokyc-backend-1 python manage.py seed_db
 ```
 
 **Seed Script Output:**
-- Reviewer: `reviewer1` / `password123`
-- Merchant 1: `merchant_1` / `password123` (Status: Draft)
-- Merchant 2: `merchant_2` / `password123` (Status: Under Review)
+- Reviewer: `reviewer1@playtopay.com` / `password123`
+- Merchant 1: `merchant_1@playtopay.com` / `password123` (Status: Draft)
+- Merchant 2: `merchant_2@playtopay.com` / `password123` (Status: Under Review)
 
 ### 4. Running Unit Tests
 To execute the test suite (which includes tests for the state machine and illegal transitions):
