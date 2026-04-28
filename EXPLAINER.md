@@ -51,6 +51,123 @@ I implemented an "In-App Notification Bell" system using a custom `NotificationE
 
 ---
 
+## 5. The Queue: Reviewer Dashboard Query & SLA Flag
+
+Here is the exact queryset that powers the reviewer's work queue (`backend/kyc/views.py`, `ReviewerQueueViewSet.get_queryset`):
+
+```python
+def get_queryset(self):
+    qs = KYCSubmission.objects.exclude(status='draft')
+
+    status_filter = self.request.query_params.get('filter')
+    if status_filter == 'queue':
+        qs = qs.filter(status__in=['submitted', 'under_review']).order_by('submitted_at')
+    elif status_filter == 'archive':
+        qs = qs.exclude(status='draft').order_by('-submitted_at')
+    else:
+        qs = qs.order_by('submitted_at')
+
+    return qs
+```
+
+And the SLA flag is a computed `@property` on the `KYCSubmission` model itself (`backend/kyc/models.py`):
+
+```python
+@property
+def at_risk(self):\
+    if self.status in ['submitted', 'under_review'] and self.submitted_at:
+        delta = timezone.now() - self.submitted_at
+        return delta.total_seconds() > 24 * 3600
+    return False
+```
+
+**Why I wrote it this way:**
+
+1. **FIFO ordering (`order_by('submitted_at')`):** The queue is sorted oldest-first. This is intentional — it ensures that no submission is starved. A reviewer always picks up the oldest unactioned case first, which is standard practice in financial compliance queues.
+
+2. **`exclude(status='draft')` as the base filter:** Drafts are a merchant's private workspace. They should never be visible to a reviewer until the merchant explicitly clicks "Submit." This single ORM call is the entire boundary between private and shared data.
+
+3. **The `at_risk` property is on the model, not the view:** I deliberately computed the SLA flag at the model layer rather than in a serializer annotation. This means the business rule ("24 hours") lives in one place. If the SLA changes to 48 hours, you change one line in `models.py`, and the serializer, the API, and the frontend all inherit the fix automatically. It is computed in Python on the fetched queryset — for a 72-hour assessment with a small dataset this is fine, but in production I would move this to a `Case/When` database annotation to avoid an N+1 pattern.
+
+---
+
+## 6. The Auth: Preventing Merchant A from Seeing Merchant B's Data
+
+The isolation check is a single line inside `MerchantKYCViewSet.get_queryset` (`backend/kyc/views.py`):
+
+```python
+class MerchantKYCViewSet(viewsets.ModelViewSet):
+    serializer_class = KYCSubmissionSerializer
+    permission_classes = [permissions.IsAuthenticated, IsMerchant]
+
+    def get_queryset(self):
+        # This single line is the entire data isolation boundary.
+        # `self.request.user` is the authenticated JWT principal — it cannot
+        # be spoofed by a request body or query parameter.
+        return KYCSubmission.objects.filter(merchant=self.request.user)
+```
+
+And the `IsMerchant` permission guard that sits in front of every request on this ViewSet:
+
+```python
+class IsMerchant(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == 'merchant'
+        )
+```
+
+**Why this is the correct pattern:**
+
+- The filter `merchant=self.request.user` uses the **authenticated JWT principal** from the token — not anything the client sends in the URL or body. A merchant cannot craft a request that changes this value.
+- Django REST Framework calls `get_queryset()` before serializing, so even if Merchant A guesses Merchant B's submission `pk` (e.g., `GET /api/v1/merchant/submissions/42/`), the DRF `get_object()` method runs a `.get()` against the already-scoped queryset. The record simply does not exist in Merchant A's view of the world — they get a 404, not a 403, which avoids leaking the existence of the record itself (a standard IDOR mitigation).
+- The `IsMerchant` guard is a class-level `permission_classes` declaration. It cannot be forgotten on individual actions because it applies to every method in the ViewSet automatically.
+
+---
+
+## The AI Audit: A Specific Bug Caught and Fixed
+
+**Context:** When I asked the AI to scaffold the `mark_notification_read` endpoint, it initially generated the following:
+
+**What the AI gave me:**
+```python
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def mark_notification_read(request, pk):
+    notification = NotificationEvent.objects.get(pk=pk)  # <-- BUG
+    notification.is_read = True
+    notification.save()
+    return Response({"success": True})
+```
+
+**What I caught:**
+
+The `.get(pk=pk)` call fetches the notification by its primary key with **no ownership check**. This is a classic **Insecure Direct Object Reference (IDOR)**. Any authenticated user — whether a merchant or a reviewer — could call `POST /api/v1/notifications/999/read/` with any `pk` and mark another user's notification as read. Since notification IDs are sequential integers, a bad actor could trivially enumerate and silently clear another reviewer's unread work queue.
+
+**What I replaced it with:**
+```python
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def mark_notification_read(request, pk):
+    try:
+        # recipient=request.user is the ownership check.
+        # If the notification exists but belongs to someone else,
+        # this raises DoesNotExist and we return a 404 — not a 403 —
+        # so we don't leak whether the record exists at all.
+        notification = NotificationEvent.objects.get(pk=pk, recipient=request.user)
+    except NotificationEvent.DoesNotExist:
+        return Response({"error": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+    notification.is_read = True
+    notification.save(update_fields=['is_read'])
+    return Response({"success": True})
+```
+
+The fix adds `recipient=request.user` to the `.get()` call, scoping the lookup to only records owned by the requesting user — identical in spirit to the `get_queryset` filter on the merchant ViewSet. I also added `update_fields=['is_read']` as a minor hardening measure, which tells Django to issue a single-column `UPDATE` rather than a full-row write, reducing the blast radius of any accidental field mutation.
+
+---
+
 ## AI Audit & Usage
 
 **How AI was used:**
